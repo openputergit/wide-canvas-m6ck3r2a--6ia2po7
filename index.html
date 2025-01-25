@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Collection App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f0f9ff;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Data Collection Form</h1>
+        
+        <form id="dataForm" class="space-y-4">
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Angle (in degrees)</label>
+                    <input type="number" id="angle" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Shape</label>
+                    <select id="shape" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                        <option value="">Select shape</option>
+                        <option value="circle">Circle</option>
+                        <option value="square">Square</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="rectangle">Rectangle</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Column Number</label>
+                    <input type="number" id="column" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Rebound Number</label>
+                    <input type="number" id="rebound" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Carbonation</label>
+                    <input type="number" step="0.01" id="carbonation" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Moisture (%)</label>
+                    <input type="number" step="0.01" id="moisture" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Add Record
+                </button>
+                <button type="button" id="saveCSV" class="w-full bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                    Save to CSV
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Record</h2>
+            <div id="recentRecord" class="bg-gray-50 p-4 rounded-md">
+                <p class="text-gray-500 text-sm">No records yet</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let records = [];
+
+        document.getElementById('dataForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const record = {
+                angle: document.getElementById('angle').value,
+                shape: document.getElementById('shape').value,
+                column: document.getElementById('column').value,
+                rebound: document.getElementById('rebound').value,
+                carbonation: document.getElementById('carbonation').value,
+                moisture: document.getElementById('moisture').value
+            };
+
+            records.push(record);
+            displayRecentRecord(record);
+            this.reset();
+        });
+
+        function displayRecentRecord(record) {
+            const recentRecordDiv = document.getElementById('recentRecord');
+            recentRecordDiv.innerHTML = `
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <p><strong>Angle:</strong> ${record.angle}°</p>
+                    <p><strong>Shape:</strong> ${record.shape}</p>
+                    <p><strong>Column:</strong> ${record.column}</p>
+                    <p><strong>Rebound:</strong> ${record.rebound}</p>
+                    <p><strong>Carbonation:</strong> ${record.carbonation}</p>
+                    <p><strong>Moisture:</strong> ${record.moisture}%</p>
+                </div>
+            `;
+        }
+
+        document.getElementById('saveCSV').addEventListener('click', function() {
+            if (records.length === 0) {
+                alert('No records to save!');
+                return;
+            }
+
+            const headers = ['angle_in_degree,shape,column_number,rebound_number,carbonation,moisture_in_percent'];
+            const csvContent = records.map(record => 
+                `${record.angle},${record.shape},${record.column},${record.rebound},${record.carbonation},${record.moisture}`
+            );
+
+            const csv = headers.concat(csvContent).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'data_records.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
